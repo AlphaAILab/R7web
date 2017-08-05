@@ -61,13 +61,6 @@ var rule_color={
     1: "rgb(126,72,191)"
 };
 
-function save_botlist(botlist){
-    for(var x in botlist){
-        botlist[x].botid=x;
-    }
-    localStorage.setItem('botlist',JSON.stringify(botlist));
-}
-
 function getUrlVar(key){
 	var result = new RegExp(key + "=([^&]*)", "i").exec(window.location.search); 
 	return result && unescape(result[1]) || ""; 
@@ -317,7 +310,7 @@ function show_win(winner){
 
 function do_timeout(X,do_operation) {
     $('#clock'+X.x).text('');
-    if(X.type === 'remote' || X.type === 'bot' ){
+    if(X.type === 'log' || X.type === 'remote' || X.type === 'bot' ){
         //不用干
     }else{
         render_init();
