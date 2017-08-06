@@ -1,0 +1,32 @@
+<textarea></textarea>
+
+
+<script src="./static/js/jquery.min.js"></script>
+<script type="text/javascript">
+	var users=['trivial', 'nyz', 'wwx_hc_szc', 'jc_zxy_rzz', 'lby_wsy_qyx', 'lr_zyx_myh', 'lyh_zhx_jzh', 'mlf', 'rcx_mzy', 'zcz_zhy_ljw', 'wyx_dsy', 'xzw_zys_lzh', 'lljz', 'lqy_ljz', 'wyy_gch_zxz', 'zzj_rhl_nbn', 'ljx_lyj_jyt', 'hh_hty']
+	var result=[];
+	for(var i=0;i<18;i++){
+		result.push([]);
+		for(var j=0;j<18;j++){
+			result[i].push([0,0])
+		}
+	}
+	console.log(result)
+	for(var i =0;i<users.length;i++){
+		for(var j=i+1;j<users.length;j++){
+			player = users[i]+'+VS+'+users[j]
+			let a = i;
+			let b = j;
+			$.ajax({
+                url:"/logs/"+player+".json",
+                type:"get",
+                timeout:"20000",
+                dataType:"json",
+                success: function (data,status){
+                    result[a][b]=[data.winning_count_0,data.winning_count_1]
+                    $('textarea').text(JSON.stringify(result))
+                }
+            });
+		}
+	}
+</script>
