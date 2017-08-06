@@ -1,6 +1,7 @@
 'user strict'
 
 let g;
+var game_log={};
 var A={};
 var B={};
 let selectable = false;
@@ -149,130 +150,6 @@ function activebtn(btn){
 function disablebtn(btn){
     $(btn).addClass('disabled');
     $(btn).removeClass('btn-raised');
-
-}
-
-function click_withdraw(){
-    console.log('withdraw');
-    render_init();
-    disablebtn('#play');
-    disablebtn('#play-card');
-    disablebtn('#play-rule');
-    disablebtn('#undo');
-    _do_operation(0,0);
-}
-function click_play(){
-    console.log('click play '+_card+' '+_rule_card);
-    $('#op-pan').hide();
-    render_init();
-    disablebtn('#play');
-    disablebtn('#play-card');
-    disablebtn('#play-rule');
-    disablebtn('#undo');
-    _do_operation(_card,_rule_card);
-}
-
-function click_card(){
-    console.log('click play '+_cid);
-    _card = _cid;
-    if(_card === _rule_card){
-        _rule_card = 0;
-    }
-    var hands = [];
-    arrcopy(hands,g.hands[A.gid]);
-    var pos = hands.indexOf(_card);
-    if(pos>=0){
-        hands.splice(pos,1);
-    }
-    pos = hands.indexOf(_rule_card);
-    if(pos>=0){
-        hands.splice(pos,1);
-    }
-    var palette = [];
-    arrcopy(palette,g.palette[A.gid]);
-    if(_card > 0) palette.push(_card);
-    $('#paletteA').html(palette2html(palette));
-    $('#paletteB').html(palette2html(g.palette[B.gid]));
-    $('#handA').html(hands2html(hands, false, selectable));
-    // 动画
-    if(g.try_play(A.gid,_card,_rule_card)){
-        activebtn('#play');
-    }else{
-        disablebtn('#play')
-    }
-    activebtn('#undo');
-    disablebtn('#play-card');
-    disablebtn('#play-rule');
-
-
-}
-
-
-function click_rule(){
-    console.log('click rule '+_cid);
-    _rule_card = _cid;
-    if(_card === _rule_card){
-        _card = 0;
-    }
-    var hands = [];
-    arrcopy(hands,g.hands[A.gid]);
-    var pos = hands.indexOf(_card);
-    if(pos>=0){
-        hands.splice(pos,1);
-    }
-    pos = hands.indexOf(_rule_card);
-    if(pos>=0){
-        hands.splice(pos,1);
-    }
-    var palette = [];
-    arrcopy(palette,g.palette[A.gid]);
-    if(_card > 0) palette.push(_card);
-    $('#paletteA').html(palette2html(palette));
-    $('#paletteB').html(palette2html(g.palette[B.gid]));
-    $('#handA').html(hands2html(hands,false,selectable));
-    $('#rule').html(`<div><img src="./static/img/cards/${_rule_card}.png" height=40px> </div>`+`<div class="rule-text">${rule[_rule_card%10]}</div>`)
-    $('#rule').css('color',rule_color[_rule_card%10])
-    // 动画
-    if(g.try_play(A.gid,_card,_rule_card)){
-        activebtn('#play');
-    }else{
-        disablebtn('#play')
-    }
-    activebtn('#undo');
-    disablebtn('#play-card');
-    disablebtn('#play-rule');
-    
-}
-
-
-function click_undo(){
-    console.log('click undo '+_cid);
-    _card = _rule_card = 0;
-    render_init();
-    disablebtn('#play');
-    disablebtn('#play-card');
-    disablebtn('#play-rule');
-    disablebtn('#undo');
-}
-
-function select_card(cid){
-    if(!selectable) return;
-    if(g.hands[A.gid].indexOf(cid)<0) return;
-    console.log('choose'+cid);
-    _cid = cid;
-    // todo
-    if(!$("#card"+cid).hasClass('card-select')){
-        $(".card-hand").removeClass('card-select');
-        $("#card"+cid).addClass('card-select');
-        activebtn('#play-card');
-        activebtn('#play-rule');
-
-    }else{
-        $("#card"+cid).removeClass('card-select');
-        disablebtn('#play-card');
-        disablebtn('#play-rule');
-
-    }
 }
 
 
@@ -310,12 +187,7 @@ function show_win(winner){
 
 function do_timeout(X,do_operation) {
     $('#clock'+X.x).text('');
-    if(X.type === 'log' || X.type === 'remote' || X.type === 'bot' ){
-        //不用干
-    }else{
-        render_init();
-        do_operation(0, 0);
-    }    
+    //不用干
 }
 
 function getNow(){
@@ -533,132 +405,62 @@ function start(){
     }
     
 }
+
+// ?url=233&game_type=log&logid=233
 function receive(){
     var url = testurl('url');
     if(url){
         game_type = getUrlVar('game_type');
-        if(game_type === 'human_ai'){
-            A.name = localStorage.getItem('username');
-            B.name = getUrlVar('Bname');
-            A.gid = parseInt(getUrlVar('Agid'))
-            B.gid = parseInt(getUrlVar('Bgid'));
-            A.roundtime =parseInt(getUrlVar('Aroundtime'));
-            B.roundtime = parseInt(getUrlVar('Broundtime'));
-            AI_wait_time = parseInt(getUrlVar('AIwaittime'));
-            var _hideB = getUrlVar('hideB');
-            if(_hideB === "true") hideB = true;
-            else if(_hideB === "false") hideB = false;
-            else{
-                console.log('[!] _hideB: ',_hideB);
-            }
-            A.type = "human";
-            B.type = "bot";
-            var botid = parseInt(getUrlVar("Bbotid"));
-            var botlist = JSON.parse(localStorage.getItem('botlist'));
-            B.bot_path = botlist[botid].bot_path;
-            B.botid = botid;
+        if(game_type === 'log'){
+            var logid = getUrlVar('logid');
+            // AJAX获取log
 
-            // back
-            backparam.A_is_human = 'aaa';
-            backparam.B_is_ai = 'aaa';
-            backparam.B_ai_id = botid;
+            $.ajax({
+                url:"/data/"+logid+".json",
+                type:"get",
+                timeout:"20000",
+                dataType:"json",
+                success: function (data,status){
+                    if(status !== "success"){
+                        alert('[!] '+status);
+                        return;
+                    }
+                    game_log = data
 
-        }else if(game_type === 'ai_ai'){
-            A.name = getUrlVar('Aname');
-            B.name = getUrlVar('Bname');
-            A.gid = parseInt(getUrlVar('Agid'))
-            B.gid = parseInt(getUrlVar('Bgid'));
-            A.roundtime =parseInt(getUrlVar('Aroundtime'));
-            B.roundtime = parseInt(getUrlVar('Broundtime'));
-            AI_wait_time = parseInt(getUrlVar('AIwaittime'));
-            var _hideB = getUrlVar('hideB');
-            if(_hideB === "true") hideB = true;
-            else if(_hideB === "false") hideB = false;
-            else{
-                console.log('[!] _hideB: ',_hideB);
-            }
-            A.type = "bot";
-            B.type = "bot";
-            var Abotid = parseInt(getUrlVar("Abotid"));
-            var Bbotid = parseInt(getUrlVar("Bbotid"));
-            var botlist = JSON.parse(localStorage.getItem('botlist'));
-            A.bot_path = botlist[Abotid].bot_path;
-            A.botid = Abotid;
-            B.bot_path = botlist[Bbotid].bot_path;
-            B.botid = Bbotid;
+                    var todo = "todo"
+                    A.name = todo
+                    B.name = todo
+                    A.gid = 0
+                    B.gid = 1
+                    A.roundtime = 2
+                    B.roundtime = 2
+                    hideB = false
+                    A.type = "log"
+                    B.type = "log"
 
-            backparam.A_is_ai = 'aaa';
-            backparam.A_ai_id = Abotid;
-            backparam.B_is_ai = 'aaa';
-            backparam.B_ai_id = Bbotid;
-            console.log('path');
-            console.log(A.bot_path);
-            console.log(B.bot_path);
-            // debug
-            //A.roundtime = 30;
-            //round_wait_time = 100;
-            //return_wait_time = 100;
-
-        }else if(game_type === 'online'){
-            A.name = getUrlVar('Aname');
-            B.name = getUrlVar('Bname');
-            A.gid = 0;
-            B.gid =1;
-            A.roundtime =parseInt(getUrlVar('Aroundtime'));
-            B.roundtime = parseInt(getUrlVar('Broundtime'));
-            AI_wait_time = parseInt(getUrlVar('AIwaittime'));
-
-            var _hideB = getUrlVar('hideB');
-            if(_hideB === "true") hideB = true;
-            else if(_hideB === "false") hideB = false;
-            else{
-                console.log('[!] _hideB: ',_hideB);
-            }
-            if(testurl('A_is_ai')){
-                A.type = 'bot';
-            }else if(testurl('A_is_human')){
-                A.type = 'human';
-            }else{
-                console.log('[!] unknow A type');
-            }
-            B.type = 'remote';
-            if(A.type === 'bot'){
-                var Abotid = parseInt(getUrlVar('Abotid'));
-                var botlist = JSON.parse(localStorage.getItem('botlist'));
-                A.bot_path = botlist[Abotid].bot_path;
-                A.botid = Abotid;
-                
-            }
-            if(A.type === 'bot'){
-                backparam.A_is_ai = 'aaa';
-                backparam.A_ai_id = A.botid;
-            }else{
-                backparam.A_is_human = 'aaa';
-            }
-            backparam.B_is_remote = 'aaa';
-            backparam.Bname = B.name;
-            backparam.ready = 'aaa';
-            if(_op_timeout){
-                backparam = {};
-            }
-
-            ipcRenderer.send("sign_up", localStorage.getItem("uuid"), A.name);
-            ipcRenderer.send("update_status", "fighting", B.name);
-
-
-            ipcRenderer.once("opponet_disconnected", function(e, op) {
-                if (op === B.name) {
-                    _op_timeout = true;
-                    A.score = 40;
-                    start();
+                    console.log(data)
+                    play_log();
                 }
-            });
+            })
 
+        }else{
+            console.log('[!] game_mode error')
         }
-        
-
     }
 }
 
-$(receive);
-$(start);
+$(receive)
+
+
+function play_log(){
+    // render_init
+
+    for(){
+        // play_step
+
+        // sleep (settimeout)
+    }
+
+}
+
+
