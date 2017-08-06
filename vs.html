@@ -23,6 +23,7 @@
 .div-a{ float:left;width:49%;border:0.3px solid #FFF} 
 .div-b{ float:left;width:49%;border:0.3px solid #FFF} 
 </style>
+<div>
 <div class="div-a">
   <h3 id="name0"> </h3>
   <!-- <p>
@@ -30,7 +31,7 @@
     <div id="link-0"></div>
   </p> -->
   <p>
-    <h5>胜利对局:</h5>
+    <h5>胜利对局(点击可以观看):</h5>
     <ul id="game-0">
       <li>Loading...</li>
       <li>Loading...</li>
@@ -45,7 +46,7 @@
     <div id="link-1"></div>
   </p> -->
   <p>
-    <h5>胜利对局:</h5>
+    <h5>胜利对局(点击可以观看):</h5>
     <ul id="game-1">
       <li>Loading...</li>
       <li>Loading...</li>
@@ -53,7 +54,7 @@
     </ul>
   </p>
 </div> 
-
+</div>
 	<footer class="site-footer">
         
         <span class="site-footer-credits" style="margin-left:50px;">Made by <a href="https://blog.lcybox.com">Chenyao Lou</a> and <a href="https://zrt.io/blog/">Ruotian Zhang</a>.</span>
@@ -98,7 +99,7 @@
                 if(tmp) tmp+="→";
                 tmp+=`(${c[0]},${c[1]})`
               }
-              s[now.winner]+=`<li><a href="/r7.html?url=233&game_type=log&player=${player}&gameid=${i}">${tmp}</a></li>`
+              s[now.winner]+=`<li><a target="view_window" href="/r7.html?url=233&game_type=log&player=${player}&gameid=${i}">#${i}<br>${tmp}</a></li>`
             }
             console.log(s)
             $('#game-0').html(s[0]);
