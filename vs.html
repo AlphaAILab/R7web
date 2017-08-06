@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>AlphaRed7 GUI</title>
+
+<script src="./static/js/jquery.min.js"></script>
+    <meta name="description" content="AlphaRed7 GUI"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="./css1.css">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">AlphaRed7 GUI</h1>
+      
+    </section>
+
+    <section class="main-content">
+<style type="text/css">
+  
+.div-a{ float:left;width:49%;border:0.3px solid #FFF} 
+.div-b{ float:left;width:49%;border:0.3px solid #FFF} 
+</style>
+<div class="div-a">
+  <h3 id="name0"> </h3>
+  <!-- <p>
+    <h5>源代码下载:</h5>
+    <div id="link-0"></div>
+  </p> -->
+  <p>
+    <h5>胜利对局:</h5>
+    <ul id="game-0">
+      <li>A</li>
+      <li>B</li>
+      <li>C</li>
+    </ul>
+  </p>
+</div> 
+<div class="div-b">
+  <h3 id=name1></h3>
+  <!-- <p>
+    <h5>源代码下载:</h5>
+    <div id="link-1"></div>
+  </p> -->
+  <p>
+    <h5>胜利对局:</h5>
+    <ul id="game-1">
+      <li>A</li>
+      <li>B</li>
+      <li>C</li>
+    </ul>
+  </p>
+</div> 
+
+	<footer class="site-footer">
+        
+        <span class="site-footer-credits" style="margin-left:50px;">Made by <a href="https://blog.lcybox.com">Chenyao Lou</a> and <a href="https://zrt.io/blog/">Ruotian Zhang</a>.</span>
+      </footer>    
+
+  <!-- ?url=233&game_type=log&player=jc_zxy_rzz+VS+lby_wsy_qyx&gameid=2 -->
+  <script type="text/javascript">
+  function getUrlVar(key){
+    var result = new RegExp(key + "=([^&]*)", "i").exec(window.location.search); 
+    return result && unescape(result[1]) || ""; 
+  }
+  var player;
+    function receive(){
+      player = getUrlVar('player')
+      $('title').text('Red7: '+player.replace('+',' ').replace('+',' '))
+      $('.project-name').text(player.replace('+',' ').replace('+',' '))
+      console.log(player)
+      $.ajax({
+        url:"/logs/"+player+".json",
+        type:"get",
+        timeout:"20000",
+        dataType:"json",
+        success: function (data,status){
+            if(status !== "success"){
+                alert('[!] '+status);
+                return;
+            }
+
+            console.log(data)
+            $('#t1').text(data.name_0+' '+data.winning_count_0+' : '+data.winning_count_1+' '+data.name_1);
+            $('#name0').text(data.name_0+' : '+data.winning_count_0)
+            $('#name1').text(data.name_1+' : '+data.winning_count_1)
+            var s=["",""]
+            for(var i=1;i<=1000 ;i++){
+
+              var now = data.rounds[i];
+              // console.log(data.rounds[])
+              var tmp = ""
+              var c=[0,0];
+              for(var j=0;j<now.details.length;j++){
+                c[now.details[j].winner]+=now.details[j].score;
+                if(tmp) tmp+="→";
+                tmp+=`(${c[0]},${c[1]})`
+              }
+              s[now.winner]+=`<li><a href="/r7.html?url=233&game_type=log&player=${player}&gameid=${i}">${tmp}</a></li>`
+            }
+            console.log(s)
+            $('#game-0').html(s[0]);
+            $('#game-1').html(s[1]);
+        }
+    });
+
+    }
+
+    $(receive)
+
+  </script>
+  </body>
+</html>
+
+
