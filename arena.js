@@ -1,6 +1,114 @@
 'user strict'
 
-let g;
+function max_element(a){
+    //console.log(a);
+    var tmp = a[0];
+    for(var x of a){
+        //console.log("x = " + x);
+        if(x>tmp) tmp=x;
+    }
+    return tmp;
+}
+
+function compare(a,b){
+    if (a.length===0) return false;
+  else if (a.length>b.length) return true;
+  else if (a.length<b.length) return false;
+  else return (max_element(a) > max_element(b));
+}
+
+function red(a){
+    // Highest
+    var r=[];
+    r.push(max_element(a));
+    return r;
+}
+
+function orange(a){
+    // same number
+    var n =[[],[],[],[],[],[],[],[]];
+    for(var x of a){
+        n[Math.floor(x/10)].push(x);
+    }
+    var best=n[1];
+    for(var i=2;i<8;i++){
+        if(compare(n[i],best)) best=n[i];
+    }
+    return best;
+}
+
+function yellow(a){
+    // same color
+    var n =[[],[],[],[],[],[],[],[]];
+    for(var x of a){
+        n[x%10].push(x);
+    }
+    var best=n[1];
+    for(var i=2;i<8;i++){
+        if(compare(n[i],best)) best=n[i];
+    }
+    return best;
+}
+
+function green(a){
+    // even number
+    var r=[];
+    for(var x of a){
+        if(Math.floor(x/10)%2 === 0) r.push(x);
+    }
+    return r;
+}
+
+function blue(a){
+    // different color
+    var m_color =Array(8).fill(0);
+    for(var x of a){
+        if(x>m_color[x%10]) m_color[x%10]=x;
+    }
+    var r = [];
+    for (var x of m_color) {
+        if (x > 0) r.push(x);
+    }
+    return r;
+}
+
+function indigo(a) {
+    // in a row
+    var m_number = Array(8).fill(0);
+    for (var x of a) {
+        if (x > m_number[Math.floor(x/10)]) m_number[Math.floor(x/10)] = x;
+    }
+
+    var best = [], current = [];
+    for (var i = 1; i < 8; i++) {
+        if (m_number[i] === 0) current = [];
+        else {
+            current.push(m_number[i]);
+            if (compare(current, best)) best = current;
+        }
+    }
+    return best;
+}
+
+function violet(a) {
+    // below 4
+    var r = [];
+    for (var x of a) {
+        if (Math.floor(x/10) < 4) r.push(x);
+    }
+    return r;
+}
+
+var g={hands:[[],[]],palette:[[],[]],get_top:{
+    7: red,
+    6: orange,
+    5: yellow,
+    4: green,
+    3: blue,
+    2: indigo,
+    1: violet
+},current_rule:7};
+var game_all={};
 var game_log={};
 var A={};
 var B={};
@@ -15,11 +123,10 @@ A.score=0;
 B.score=0;
 A.type = "log"
 B.type = "log"
-
+var round
 var orderby = "number";
 // remote
-A.roundtime = 2;
-B.roundtime = 2;
+var roundtime = 1.5;
 var round_num=0;
 var start_time = 0;
 var _do_operation;
@@ -406,17 +513,22 @@ function start(){
     
 }
 
-// ?url=233&game_type=log&logid=233
+var lognow;
+
+// ?url=233&game_type=log&player=jc_zxy_rzz+VS+lby_wsy_qyx&gameid=2
 function receive(){
     var url = testurl('url');
     if(url){
         game_type = getUrlVar('game_type');
         if(game_type === 'log'){
-            var logid = getUrlVar('logid');
+            var player = getUrlVar('player');
+            var gameid = getUrlVar('gameid');
+            gameid = parseInt(gameid)
+
             // AJAX获取log
 
             $.ajax({
-                url:"/data/"+logid+".json",
+                url:"/logs/"+player+".json",
                 type:"get",
                 timeout:"20000",
                 dataType:"json",
@@ -425,23 +537,25 @@ function receive(){
                         alert('[!] '+status);
                         return;
                     }
-                    game_log = data
-
-                    var todo = "todo"
-                    A.name = todo
-                    B.name = todo
+                    game_all = data
+                    A.name = data.name_0
+                    B.name = data.name_1
                     A.gid = 0
                     B.gid = 1
-                    A.roundtime = 2
-                    B.roundtime = 2
                     hideB = false
                     A.type = "log"
                     B.type = "log"
 
                     console.log(data)
-                    play_log();
+                    render_init();
+
+                    round=data.rounds[gameid];
+                    lognow = getNow()+1000;
+                    
+                    play_log(0);
+
                 }
-            })
+            });
 
         }else{
             console.log('[!] game_mode error')
@@ -451,16 +565,56 @@ function receive(){
 
 $(receive)
 
+function play_log(x){
+    if(x>=round.details.length) return;
+    $.ajax({
+        url:"/logs/"+round.details[x].log,
+        type:"get",
+        timeout:"20000",
+        dataType:"json",
+        success:function(data,status){
+            console.log(data);
+            for(var i=0;i<data.details.length;i++){
+                let dd = data.details[i]
+                setTimeout(function(){
+                    
+                    console.log(dd)
+                    g.hands[0] = dd.hand_0
+                    g.hands[1] = dd.hand_1
+                    g.palette[0] = dd.palette_0
+                    g.palette[1] = dd.palette_1
+                    g.current_rule = dd.rule%10
+                    last_rule_card = dd.rule
+                    if(last_rule_card === 7) last_rule_card = 0
+                    render_init();
+                },lognow-getNow());
+                lognow+=roundtime*1000;
+            }
+            setTimeout(function(){
+                var winner = game_all["name_"+data.winner]
+                $.alert({
+                    title: `${winner} win!`,
+                    content: `${winner} win this round! Next round will start in 3s.`,
+                    autoClose: `close|${2 *1000 -500}`,
+                    buttons:{
+                        close : function(){
+                            console.log('message_box close');
+                        }
+                    }
+                })
+                if(data.winner === 0){
+                    A.score += data.winning_score;
+                }else{
+                    B.score += data.winning_score;
+                }
+                render_init();
+            },lognow-getNow())
+            lognow += 2000
+            play_log(x+1)
+        }
+    })
 
-function play_log(){
-    // render_init
-
-    for(){
-        // play_step
-
-        // sleep (settimeout)
-    }
-
+    
 }
 
 
