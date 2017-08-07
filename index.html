@@ -10,6 +10,8 @@
     <meta name="theme-color" content="#157878">
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="./css1.css">
+    <link href="./static/css/jquery.fs.tipper.css" rel="stylesheet" type="text/css" media="all">
+    <script src="./static/js/jquery.fs.tipper.js"></script>
   </head>
   <body>
     <section class="page-header">
@@ -22,7 +24,7 @@
     padding-right: 0px;
 ">
 
-<em>点击表格内容可以查看详情</em>
+<em>试试鼠标悬浮比分。点击表格内容可以查看详情。</em>
 
 <!-- CSS goes in the document HEAD or added to your external stylesheet -->
 <style type="text/css">
@@ -88,16 +90,23 @@ table.gridtable td {
     s+="<th>"+users[i]+"</th>"
     for(var j=0;j<18;j++){
       if(i<j){
-      s+=`<td><a href="/vs.html?player=${users[i]}+VS+${users[j]}">${result[i][j][0]}:${result[i][j][1]}</a></td>`
+      s+=`<td><a class="button tipped" data-title="${users[i]} vs ${users[j]}"  data-tipper-options='{"direction":"top"}' href="/vs.html?player=${users[i]}+VS+${users[j]}">${result[i][j][0]}:${result[i][j][1]}</a></td>`
       }
-      else{
+      else if(i>j){
+      s+=`<td><a class="button tipped" data-title="${users[i]} vs ${users[j]}"  data-tipper-options='{"direction":"top"}' href="/vs.html?player=${users[j]}+VS+${users[i]}">${result[j][i][1]}:${result[j][i][0]}</a></td>`
+      }else{
         s+="<td>-</td>"
       }
     }
     s+="</tr>"
   }
   $('#tb').html(s)
-
+$(function(){
+  $(".tipped").tipper();
+        $(window).one("pronto.load", function() {
+          $(".tipped").tipper("destroy");
+        });
+})
 </script>
   </body>
 </html>
